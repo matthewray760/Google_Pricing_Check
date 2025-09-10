@@ -43,16 +43,19 @@ def run_aeml(account_id,recon_date,filepath,sleeve_agg):
     custody_identifiers = f"'{custody_identifiers}'"
 
     sql_df_f = sql_cusip_id(account_id,identifiers=custody_identifiers,recon_date=recon_date)[0]
-    print(sql_df_f.columns)
-    print(sql_mapping_df.columns)
+    sql_mapping_df.rename(columns= {'Custody Cusip': 'Cusip'}, inplace=True)
  
 
     merged_df_f = pd.merge(sql_mapping_df,sql_df_f, on = 'Cusip')
-    print(merged_df_f.columns)
-    merged_df_f.rename(columns = {'Identifier': 'AlternateId', 'Account ID': 'PartitionId','Security ID': 'SecurityId'}, inplace=True)
+    
+    merged_df_f.rename(columns = {'AlternateId_x': 'AlternateId','SecurityID': 'SecurityId','MaturityDate_x':'MaturityDate','Ticker_x':'Ticker'}, inplace=True)
+
+    
     merged_df_f['PartitionType'] = '0'
+    merged_df_f['PartitionId'] = account_id
 
     final_df_f = merged_df_f[['PartitionId','PartitionType','SecurityId','AlternateId','Cusip','Isin','Sedol','Ticker','MaturityDate']]
+    
 
 
 
