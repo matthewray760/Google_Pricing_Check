@@ -3,24 +3,28 @@ import numpy as np
 from aeml import run_aeml
 from aemj import run_aemj
 from aemn import run_aemn
+from aemx import run_aemx
 
-recon_date = '2025-09-22'
+recon_date = '2025-10-31'
 
-filename = 'price_check_9.22'
+filename = 'price_check_10.31.2'
 
 filepath = fr'C:\Users\matthewray\OneDrive - Clearwater\Desktop\Python\Google_Pricing_Check\input\{filename}.csv'
 
-#test_file_option_8.31
 
 
 aeml_irs, aeml_future, aeml_option = run_aeml(194358,recon_date,filepath,sleeve_agg=198961)
 
 
-aemj_irs, aemj_future = run_aemj(194359,recon_date,filepath,sleeve_agg= 198960)
+aemj_irs, aemj_future, aemj_option = run_aemj(194359,recon_date,filepath,sleeve_agg= 198960)
 
 aemn_irs, aemn_future, aemn_option = run_aemn(216465,recon_date,filepath,sleeve_agg= 216470)
 
+aemx_irs, aemx_future, aemx_option = run_aemx(274044,recon_date,filepath,sleeve_agg= 274046)
 
-main_df = pd.concat([aeml_irs, aeml_future, aeml_option,aemj_irs, aemj_future,aemn_irs, aemn_future, aemn_option], ignore_index=True)
 
-main_df.to_excel(fr'C:\Users\matthewray\OneDrive - Clearwater\Desktop\Python\Google_Pricing_Check\output\test_file.xlsx', index=False)
+
+
+main_df = pd.concat([aeml_irs, aeml_future, aeml_option,aemj_irs, aemj_option, aemj_future,aemn_irs, aemn_future, aemn_option, aemx_irs, aemx_future, aemx_option], ignore_index=True)
+
+main_df.to_excel(fr'C:\Users\matthewray\OneDrive - Clearwater\Desktop\Python\Google_Pricing_Check\output\{recon_date}_ouput_1.xlsx', index=False)
