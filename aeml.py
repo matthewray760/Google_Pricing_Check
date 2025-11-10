@@ -3,6 +3,7 @@ import numpy as np
 from sql import sql_alternate_id
 from sql import sql_sec_mappings
 from sql import sql_cusip_id
+from sql import sql_prom_pos
 
 def run_aeml(account_id,recon_date,filepath,sleeve_agg):
     filepath = filepath
@@ -67,18 +68,26 @@ def run_aeml(account_id,recon_date,filepath,sleeve_agg):
     
     ad_list = [identifier for identifier in identifier_list if identifier.startswith('AD')]
     non_ad_list = [identifier for identifier in identifier_list if not identifier.startswith('AD')]
+    
+    ad_list = "', '".join (ad_list)
+    ad_list = f"'{ad_list}'"
     non_ad_list = "', '".join (non_ad_list)
     non_ad_list = f"'{non_ad_list}'"
     
-    print("non-ad list is", non_ad_list)
+    print("ad list is", ad_list)
 
     
     sql_ad_df = pd.DataFrame()
 
     
     if len(ad_list)>0:
-        sql_ad_df = sql_cusip_id(account_id,ad_list)
-        sql_ad_df.rename(columns= {'Custody Cusip': 'Cusip'}, inplace=True)
+        sql_mapping_df = sql_prom_pos(ad_list,recon_date=recon_date,sleeve_agg=sleeve_agg)[0]
+
+        custody_identifiers = "', '".join(sql_mapping_df['Custody Cusip'].tolist())
+        custody_identifiers = f"'{custody_identifiers}'"
+        sql_cusip_mapping = sql_cusip_id(account_id,identifiers=custody_identifiers,recon_date=recon_date)[0]
+        sql_ad_df = pd.merge(sql_cusip_mapping,sql_mapping_df, left_on='Cusip', right_on='Custody Cusip', how = 'inner')
+
         
     else:
         pass
@@ -86,7 +95,8 @@ def run_aeml(account_id,recon_date,filepath,sleeve_agg):
     sql_nad_df = pd.DataFrame()
     
     if len(non_ad_list) > 0:
-        sql_mapping_df = sql_sec_mappings(sleeve_agg,non_ad_list)[0]
+        sql_mapping_df = sql_prom_pos(non_ad_list,recon_date=recon_date,sleeve_agg=sleeve_agg)[0]
+        print(sql_mapping_df)
         
         
         custody_identifiers = "', '".join(sql_mapping_df['Custody Cusip'].tolist())
@@ -94,7 +104,6 @@ def run_aeml(account_id,recon_date,filepath,sleeve_agg):
         sql_cusip_mapping = sql_cusip_id(account_id,identifiers=custody_identifiers,recon_date=recon_date)[0]
         sql_nad_df = pd.merge(sql_cusip_mapping,sql_mapping_df, left_on='Cusip', right_on='Custody Cusip', how = 'inner')
 
-        #sql_nad_df.to_excel(fr'C:\Users\matthewray\OneDrive - Clearwater\Desktop\Python\Google_Pricing_Check\output\sql_nad_df.xlsx', index=False)
     else:
         pass
 
@@ -105,10 +114,8 @@ def run_aeml(account_id,recon_date,filepath,sleeve_agg):
         merged_df_total = sql_ad_df  # Use the non-empty DataFrame if the other is empty
     else:
         merged_df_total = pd.merge(sql_ad_df, sql_nad_df, on='Cusip', how='inner')
- 
-
-    
-    merged_df_total.rename(columns = {'AlternateId_x': 'AlternateId','SecurityID': 'SecurityId','MaturityDate_x':'MaturityDate','Ticker_x':'Ticker'}, inplace=True)
+   
+    merged_df_total.rename(columns = {'AlternateId_x': 'AlternateId','Security ID': 'SecurityId','MaturityDate_x':'MaturityDate','Ticker_x':'Ticker'}, inplace=True)
 
     
     merged_df_total['PartitionType'] = '0'
